@@ -20,25 +20,32 @@ jobs:
         with:
           github_user_name: ${{ github.repository_owner }}
           outputs: |
-            dist/github-snake.svg?color_snake=#7c3aed&color_dots=#ebedf0,#9be9a8,#40c463,#30a14e,#216e39
-            dist/github-snake-dark.svg?color_snake=#c084fc&color_dots=#161b22,#0e4429,#006d32,#26a641,#39d353
-            dist/github-snake.gif?color_snake=#c084fc&color_dots=#161b22,#0e4429,#006d32,#26a641,#39d353
+            dist/github-snake.svg?color_snake=orange&color_dots=#ebedf0,#bfd6f6,#64a1f4,#4b91f1,#3c7dd0
+            dist/github-snake-dark.svg?color_snake=orange&color_dots=#161b22,#0d3b6f,#1e5aa8,#4b91f1,#8dbdff
+            dist/github-snake.gif?color_snake=orange&color_dots=#161b22,#0d3b6f,#1e5aa8,#4b91f1,#8dbdff
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # snk'nin isilti secenegi yok; SVG filtresini uretim sonrasi enjekte ediyoruz.
-      # .s = yilan govdesi, rengi --cs degiskeninden gelir.
+      # snk konteyner icinde root olarak calisiyor, dist/ root'a ait kaliyor.
+      # "sed -i" ciktiyi ayni dizine gecici dosya yazarak uretir ve oraya
+      # yazamaz (Permission denied -> exit 4). Bu yuzden -i kullanmiyoruz;
+      # ciktiyi runner kullanicisina ait yeni bir dizine yaziyoruz.
       - name: Yilana isilti ekle
         run: |
+          mkdir -p out
           DEFS='<defs><filter id="glow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><style>'
           for f in dist/*.svg; do
-            sed -i -e "s|<style>|$DEFS|" -e 's|</style>|.s{filter:url(#glow)}</style>|' "$f"
-            grep -q 'id="glow"' "$f" && echo "isilti eklendi: $f" || { echo "BASARISIZ: $f"; exit 1; }
+            n=$(basename "$f")
+            sed -e "s|<style>|$DEFS|" -e 's|</style>|.s{filter:url(#glow)}</style>|' "$f" > "out/$n"
+            grep -q 'id="glow"' "out/$n" || { echo "HATA: isilti eklenemedi -> $n"; exit 1; }
+            echo "isilti eklendi: $n"
           done
+          cp dist/*.gif out/ 2>/dev/null || true
+          ls -l out/
 
       - uses: crazy-max/ghaction-github-pages@v4.0.0
         with:
           target_branch: output
-          build_dir: dist
+          build_dir: out
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
