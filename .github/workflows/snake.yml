@@ -24,7 +24,11 @@ jobs:
             dist/github-snake-dark.svg?color_snake=orange&color_dots=#161b22,#0d3b6f,#1e5aa8,#4b91f1,#8dbdff
             dist/github-snake.gif?color_snake=orange&color_dots=#161b22,#0d3b6f,#1e5aa8,#4b91f1,#8dbdff
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Actions'in varsayilan GITHUB_TOKEN'i repoya ozel bir kurulum
+          # token'i; kullanici kimligi tasimadigi icin "private katkilari
+          # goster" ayarindan etkilenmez ve yalnizca public katkilari gorur.
+          # SNAKE_TOKEN tanimliysa onu kullan, yoksa eski davranisa dus.
+          GITHUB_TOKEN: ${{ secrets.SNAKE_TOKEN || secrets.GITHUB_TOKEN }}
 
       # snk konteyner icinde root olarak calisiyor, dist/ root'a ait kaliyor.
       # "sed -i" ciktiyi ayni dizine gecici dosya yazarak uretir ve oraya
